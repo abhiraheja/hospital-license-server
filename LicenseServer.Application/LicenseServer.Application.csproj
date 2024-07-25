@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\LicenseServer.Domain\LicenseServer.Domain.csproj" />
+    <ProjectReference Include="..\LicenseServer.Models\LicenseServer.Models.csproj" />
+  </ItemGroup>
+
 </Project>

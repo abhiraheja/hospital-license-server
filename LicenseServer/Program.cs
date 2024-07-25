@@ -1,14 +1,21 @@
+using LicenseServer.Application.Interfaces;
 using LicenseServer.Domain;
+using LicenseServer.Infrastructure;
+using LicenseServer.Application;
+using LicenseServer.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var services = builder.Services;
 var configuration = builder.Configuration;
-//Hello
+
 services.AddControllers();
 services.AddEndpointsApiExplorer();
 services.AddSwaggerGen();
+
+
+services.AddInfrastructure().AddApplication();
 
 var connectionString = configuration.GetConnectionString("Connection");
 services.AddDbContext<ApplicationDbContext>(options =>

@@ -1,22 +1,19 @@
-﻿using LicenseServer.Domain;
+﻿using Azure.Core;
+using LicenseServer.Application.Interfaces;
+using LicenseServer.Domain;
 using LicenseServer.Models.Hospital;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace LicenseServer.Controllers
+namespace LicenseServer.Infrastructure.Repositories
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class HomeController : ControllerBase
+    public class HospitalRepository : IHospitalRepository
     {
         readonly ApplicationDbContext _context;
-        public HomeController(ApplicationDbContext context)
+        public HospitalRepository(ApplicationDbContext context)
         {
             _context = context;
         }
-
-        [HttpPost("CreateHospital")]
-        public async Task<IActionResult> CreateHospital([FromBody] CreateHospitalRequest request)
+        public Task<int> CreateHospital(CreateHospitalRequest request)
         {
             _context.HospitalEntities.Add(new Domain.Entities.HospitalEntity
             {
@@ -30,22 +27,21 @@ namespace LicenseServer.Controllers
                 LicenseNumber = request.LicenseNumber,
                 PhoneNumber = request.PhoneNumber,
             });
-            await _context.SaveChangesAsync();
-            return Ok("Created");
+            return _context.SaveChangesAsync();
+
         }
 
-        [HttpPut("UpdateHospital/{id}")]
-        public async Task<IActionResult> UpdateHospital(string id, [FromBody] CreateHospitalRequest request)
+        public async Task UpdateHospital(string id, CreateHospitalRequest request)
         {
             var hospital = await _context.HospitalEntities.Where(x => x.Id == id).SingleOrDefaultAsync();
             if (hospital == null)
             {
-                return NotFound("Hospital details not available");
+                throw new Exception("Hospital details not available");
             }
 
             if (string.IsNullOrEmpty(request.HospitalName))
             {
-                return BadRequest("Hospital name is required");
+                throw new Exception("Hospital name is required");
             }
 
             hospital.PhoneNumber = request.PhoneNumber;
@@ -57,22 +53,20 @@ namespace LicenseServer.Controllers
             hospital.UpdatedDate = DateTimeOffset.Now;
             _context.Update(hospital);
             await _context.SaveChangesAsync();
-            return Ok("Updated");
 
         }
 
-        [HttpPatch("UpdateHospitalName/{id}/hospital/{name}")]
-        public async Task<IActionResult> UpdateHospitalName(string id, string name)
+        public async Task UpdateHospitalName(string id, string name)
         {
             var hospital = await _context.HospitalEntities.Where(x => x.Id == id).SingleOrDefaultAsync();
             if (hospital == null)
             {
-                return NotFound("Hospital details not available");
+                throw new Exception("Hospital details not available");
             }
 
             if (string.IsNullOrEmpty(name))
             {
-                return BadRequest("Hospital name is required");
+                throw new Exception("Hospital name is required");
             }
 
             hospital.HospitalName = name;
@@ -80,27 +74,23 @@ namespace LicenseServer.Controllers
             hospital.UpdatedDate = DateTimeOffset.Now;
             _context.Update(hospital);
             await _context.SaveChangesAsync();
-            return Ok("Updated");
 
         }
 
-        [HttpDelete("Delete/{id}")]
-        public async Task<IActionResult> DeleteHospital(string id)
+        public async Task DeleteHospital(string id)
         {
             var hospital = await _context.HospitalEntities.Where(x => x.Id == id).SingleOrDefaultAsync();
             if (hospital == null)
             {
-                return NotFound("Hospital details not available");
+                throw new Exception("Hospital details not available");
             }
             _context.HospitalEntities.Remove(hospital);
             await _context.SaveChangesAsync();
-            return Ok("Deleted");
         }
 
-        [HttpGet("GetHospitals")]
-        public async Task<IActionResult> GetHospitals()
+        public Task<List<HospitalListResponse>> GetHospitals()
         {
-            var hospitals = await _context.HospitalEntities.Select(x => new HospitalListResponse
+            return _context.HospitalEntities.Select(x => new HospitalListResponse
             {
                 ContactName = x.ContactName,
                 EmailAddress = x.EmailAddress,
@@ -109,25 +99,20 @@ namespace LicenseServer.Controllers
                 LicenseNumber = x.LicenseNumber,
                 PhoneNumber = x.PhoneNumber,
             }).ToListAsync();
-            return Ok(hospitals);
         }
 
-        [HttpGet("GetHospital/{id}")]
-        public async Task<IActionResult> GetHospitalById(string id)
+        public Task<HospitalListResponse?> GetHospitalById(string id)
         {
-            var hospitals = await _context.HospitalEntities.Where(x => x.Id == id)
-                    .Select(x => new HospitalListResponse
-                    {
-                        ContactName = x.ContactName,
-                        EmailAddress = x.EmailAddress,
-                        HospitalName = x.HospitalName,
-                        Id = x.Id,
-                        LicenseNumber = x.LicenseNumber,
-                        PhoneNumber = x.PhoneNumber,
-                    }).SingleOrDefaultAsync();
-            return Ok(hospitals);
+            return _context.HospitalEntities.Where(x => x.Id == id)
+                     .Select(x => new HospitalListResponse
+                     {
+                         ContactName = x.ContactName,
+                         EmailAddress = x.EmailAddress,
+                         HospitalName = x.HospitalName,
+                         Id = x.Id,
+                         LicenseNumber = x.LicenseNumber,
+                         PhoneNumber = x.PhoneNumber,
+                     }).SingleOrDefaultAsync();
         }
-
-
     }
 }
