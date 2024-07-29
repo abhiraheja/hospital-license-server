@@ -12,5 +12,6 @@ namespace LicenseServer.Domain
         }
 
         public DbSet<HospitalEntity> HospitalEntities { get; set; }
+        public DbSet<PatientEntity> PatientEntities { get; set; }
     }
 }

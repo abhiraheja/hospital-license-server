@@ -3,8 +3,7 @@ using LicenseServer.Domain.Entities;
 
 namespace LicenseServer.Application.Interfaces
 {
-    public interface IHospitalRepository : IRepositoryBase<HospitalEntity>
+    public interface IPatientRepository : IRepositoryBase<PatientEntity>
     {
-   
     }
 }

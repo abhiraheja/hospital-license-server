@@ -23,7 +23,18 @@ namespace LicenseServer.Controllers
         {
             try
             {
-                await _hospitalRepository.CreateHospital(request);
+                await _hospitalRepository.AddAsync(new Domain.Entities.HospitalEntity
+                {
+                    ContactName = request.ContactName,
+                    CreatedBy = "AUTO",
+                    CreatedDate = DateTimeOffset.Now,
+                    EmailAddress = request.EmailAddress,
+                    HospitalName = request.HospitalName,
+                    Id = Guid.NewGuid().ToString(),
+                    IsDeleted = false,
+                    LicenseNumber = request.LicenseNumber,
+                    PhoneNumber = request.PhoneNumber,
+                });
                 return Ok("Created");
             }
             catch (Exception ex)
@@ -37,7 +48,25 @@ namespace LicenseServer.Controllers
         {
             try
             {
-                await _hospitalRepository.UpdateHospital(id, request);
+                var hospital = await _hospitalRepository.GetAsync(id);
+                if (hospital == null)
+                {
+                    throw new Exception("Hospital details not available");
+                }
+
+                if (string.IsNullOrEmpty(request.HospitalName))
+                {
+                    throw new Exception("Hospital name is required");
+                }
+
+                hospital.PhoneNumber = request.PhoneNumber;
+                hospital.LicenseNumber = request.LicenseNumber;
+                hospital.HospitalName = request.HospitalName;
+                hospital.EmailAddress = request.EmailAddress;
+                hospital.ContactName = request.ContactName;
+                hospital.UpdatedBy = "AUTO";
+                hospital.UpdatedDate = DateTimeOffset.Now;
+                await _hospitalRepository.UpdateAsync(hospital);
                 return Ok("Updated");
             }
             catch (Exception ex)
@@ -51,7 +80,21 @@ namespace LicenseServer.Controllers
         {
             try
             {
-                await _hospitalRepository.UpdateHospitalName(id, name);
+                var hospital = await _hospitalRepository.GetAsync(id);
+                if (hospital == null)
+                {
+                    throw new Exception("Hospital details not available");
+                }
+
+                if (string.IsNullOrEmpty(name))
+                {
+                    throw new Exception("Hospital name is required");
+                }
+
+                hospital.HospitalName = name;
+                hospital.UpdatedBy = "AUTO";
+                hospital.UpdatedDate = DateTimeOffset.Now;
+                await _hospitalRepository.UpdateAsync(hospital);
                 return Ok("Updated");
             }
             catch (Exception ex)
@@ -65,7 +108,12 @@ namespace LicenseServer.Controllers
         {
             try
             {
-                await _hospitalRepository.DeleteHospital(id);
+                var hospital = await _hospitalRepository.GetAsync(id);
+                if (hospital == null)
+                {
+                    throw new Exception("Hospital details not available");
+                }
+                await _hospitalRepository.DeleteAsync(hospital);
                 return Ok("Deleted");
             }
             catch (Exception ex)
@@ -79,8 +127,16 @@ namespace LicenseServer.Controllers
         {
             try
             {
-                var list = await _hospitalRepository.GetHospitals();
-                return Ok(list);
+                var result = (await _hospitalRepository.GetAsync()).Select(x => new HospitalListResponse
+                {
+                    ContactName = x.ContactName,
+                    EmailAddress = x.EmailAddress,
+                    HospitalName = x.HospitalName,
+                    Id = x.Id,
+                    LicenseNumber = x.LicenseNumber,
+                    PhoneNumber = x.PhoneNumber,
+                }).ToList();
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -93,8 +149,20 @@ namespace LicenseServer.Controllers
         {
             try
             {
-                var hospitals = await _hospitalRepository.GetHospitalById(id);
-                return Ok(hospitals);
+                var hospital = await _hospitalRepository.GetAsync(id);
+                if (hospital == null)
+                {
+                    throw new Exception("Hospital not found");
+                }
+                return Ok(new HospitalListResponse
+                {
+                    ContactName = hospital.ContactName,
+                    EmailAddress = hospital.EmailAddress,
+                    HospitalName = hospital.HospitalName,
+                    Id = hospital.Id,
+                    LicenseNumber = hospital.LicenseNumber,
+                    PhoneNumber = hospital.PhoneNumber,
+                });
             }
             catch (Exception ex)
             {

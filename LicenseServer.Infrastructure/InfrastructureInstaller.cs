@@ -1,5 +1,6 @@
 ﻿using LicenseServer.Application.Interfaces;
 using LicenseServer.Infrastructure.Repositories;
+using LicenseServer.Infrastructure.Repositories.Base;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
