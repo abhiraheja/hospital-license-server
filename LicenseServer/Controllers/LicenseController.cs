@@ -1,10 +1,11 @@
-﻿using LicenseServer.Application.Interfaces;
-using LicenseServer.Domain;
-using LicenseServer.Infrastructure.Repositories;
+﻿using AutoMapper;
+using LicenseServer.Application.Features.Hospital.Command.CreateHospital;
+using LicenseServer.Application.Features.Hospital.Command.DeleteHospital;
+using LicenseServer.Application.Features.Hospital.Command.UpdateHospital;
 using LicenseServer.Models.Hospital;
-using Microsoft.AspNetCore.Http;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace LicenseServer.Controllers
 {
@@ -12,10 +13,12 @@ namespace LicenseServer.Controllers
     [ApiController]
     public class LicenseController : ControllerBase
     {
-        readonly IHospitalRepository _hospitalRepository;
-        public LicenseController(IHospitalRepository hospitalRepository)
+        readonly IMediator _mediator;
+        readonly IMapper _mapper;
+        public LicenseController(IMediator mediator, IMapper mapper)
         {
-            _hospitalRepository = hospitalRepository;
+            _mediator = mediator;
+            _mapper = mapper;
         }
 
         [HttpPost("CreateHospital")]
@@ -23,19 +26,10 @@ namespace LicenseServer.Controllers
         {
             try
             {
-                await _hospitalRepository.AddAsync(new Domain.Entities.HospitalEntity
-                {
-                    ContactName = request.ContactName,
-                    CreatedBy = "AUTO",
-                    CreatedDate = DateTimeOffset.Now,
-                    EmailAddress = request.EmailAddress,
-                    HospitalName = request.HospitalName,
-                    Id = Guid.NewGuid().ToString(),
-                    IsDeleted = false,
-                    LicenseNumber = request.LicenseNumber,
-                    PhoneNumber = request.PhoneNumber,
-                });
-                return Ok("Created");
+                var command = _mapper.Map<CreateHospitalCommand>(request);
+                var res = await _mediator.Send(command);
+
+                return Ok(res);
             }
             catch (Exception ex)
             {
@@ -48,54 +42,29 @@ namespace LicenseServer.Controllers
         {
             try
             {
-                var hospital = await _hospitalRepository.GetAsync(id);
-                if (hospital == null)
-                {
-                    throw new Exception("Hospital details not available");
-                }
+                //var hospital = await _hospitalRepository.GetAsync(id);
+                //if (hospital == null)
+                //{
+                //    throw new Exception("Hospital details not available");
+                //}
 
-                if (string.IsNullOrEmpty(request.HospitalName))
-                {
-                    throw new Exception("Hospital name is required");
-                }
+                //if (string.IsNullOrEmpty(request.HospitalName))
+                //{
+                //    throw new Exception("Hospital name is required");
+                //}
 
-                hospital.PhoneNumber = request.PhoneNumber;
-                hospital.LicenseNumber = request.LicenseNumber;
-                hospital.HospitalName = request.HospitalName;
-                hospital.EmailAddress = request.EmailAddress;
-                hospital.ContactName = request.ContactName;
-                hospital.UpdatedBy = "AUTO";
-                hospital.UpdatedDate = DateTimeOffset.Now;
-                await _hospitalRepository.UpdateAsync(hospital);
-                return Ok("Updated");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
-        [HttpPatch("UpdateHospitalName/{id}/hospital/{name}")]
-        public async Task<IActionResult> UpdateHospitalName(string id, string name)
-        {
-            try
-            {
-                var hospital = await _hospitalRepository.GetAsync(id);
-                if (hospital == null)
-                {
-                    throw new Exception("Hospital details not available");
-                }
-
-                if (string.IsNullOrEmpty(name))
-                {
-                    throw new Exception("Hospital name is required");
-                }
-
-                hospital.HospitalName = name;
-                hospital.UpdatedBy = "AUTO";
-                hospital.UpdatedDate = DateTimeOffset.Now;
-                await _hospitalRepository.UpdateAsync(hospital);
-                return Ok("Updated");
+                //hospital.PhoneNumber = request.PhoneNumber;
+                //hospital.LicenseNumber = request.LicenseNumber;
+                //hospital.HospitalName = request.HospitalName;
+                //hospital.EmailAddress = request.EmailAddress;
+                //hospital.ContactName = request.ContactName;
+                //hospital.UpdatedBy = "AUTO";
+                //hospital.UpdatedDate = DateTimeOffset.Now;
+                //await _hospitalRepository.UpdateAsync(hospital);
+                var command = _mapper.Map<UpdateHositalCommand>(request);
+                command.Id = id;
+                var response = await _mediator.Send(command);
+                return Ok(response);
             }
             catch (Exception ex)
             {
@@ -108,13 +77,14 @@ namespace LicenseServer.Controllers
         {
             try
             {
-                var hospital = await _hospitalRepository.GetAsync(id);
-                if (hospital == null)
-                {
-                    throw new Exception("Hospital details not available");
-                }
-                await _hospitalRepository.DeleteAsync(hospital);
-                return Ok("Deleted");
+                //    var hospital = await _hospitalRepository.GetAsync(id);
+                //    if (hospital == null)
+                //    {
+                //        throw new Exception("Hospital details not available");
+                //    }
+                //    await _hospitalRepository.DeleteAsync(hospital);
+                var response = await _mediator.Send(new DeleteHospitalCommand(id));
+                return Ok(response);
             }
             catch (Exception ex)
             {
@@ -127,16 +97,17 @@ namespace LicenseServer.Controllers
         {
             try
             {
-                var result = (await _hospitalRepository.GetAsync()).Select(x => new HospitalListResponse
-                {
-                    ContactName = x.ContactName,
-                    EmailAddress = x.EmailAddress,
-                    HospitalName = x.HospitalName,
-                    Id = x.Id,
-                    LicenseNumber = x.LicenseNumber,
-                    PhoneNumber = x.PhoneNumber,
-                }).ToList();
-                return Ok(result);
+                //var result = (await _hospitalRepository.GetAsync()).Select(x => new HospitalListResponse
+                //{
+                //    ContactName = x.ContactName,
+                //    EmailAddress = x.EmailAddress,
+                //    HospitalName = x.HospitalName,
+                //    Id = x.Id,
+                //    LicenseNumber = x.LicenseNumber,
+                //    PhoneNumber = x.PhoneNumber,
+                //}).ToList();
+                //return Ok(result);
+                return Ok("");
             }
             catch (Exception ex)
             {
@@ -149,20 +120,21 @@ namespace LicenseServer.Controllers
         {
             try
             {
-                var hospital = await _hospitalRepository.GetAsync(id);
-                if (hospital == null)
-                {
-                    throw new Exception("Hospital not found");
-                }
-                return Ok(new HospitalListResponse
-                {
-                    ContactName = hospital.ContactName,
-                    EmailAddress = hospital.EmailAddress,
-                    HospitalName = hospital.HospitalName,
-                    Id = hospital.Id,
-                    LicenseNumber = hospital.LicenseNumber,
-                    PhoneNumber = hospital.PhoneNumber,
-                });
+                //var hospital = await _hospitalRepository.GetAsync(id);
+                //if (hospital == null)
+                //{
+                //    throw new Exception("Hospital not found");
+                //}
+                //return Ok(new HospitalListResponse
+                //{
+                //    ContactName = hospital.ContactName,
+                //    EmailAddress = hospital.EmailAddress,
+                //    HospitalName = hospital.HospitalName,
+                //    Id = hospital.Id,
+                //    LicenseNumber = hospital.LicenseNumber,
+                //    PhoneNumber = hospital.PhoneNumber,
+                //});
+                return Ok("");
             }
             catch (Exception ex)
             {

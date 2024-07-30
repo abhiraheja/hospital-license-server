@@ -1,10 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MediatR;
 
-namespace LicenseServer.Models.Hospital
+namespace LicenseServer.Application.Features.Hospital.Command.UpdateHospital
 {
-    public class CreateHospitalRequest
+    public class UpdateHositalCommand : IRequest<string>
     {
-        [Required(ErrorMessage ="Please ")]
+        public string Id { get; set; }
         public string ContactName { get; set; }
         public string HospitalName { get; set; }
         public string EmailAddress { get; set; }
